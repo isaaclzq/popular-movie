@@ -15,16 +15,16 @@ import java.util.Scanner;
 
 public class NetworkUtility {
 
-    final static String BASE_URL = "http://api.themoviedb.org/3/movie/";
-    final static String popular = "popular";
-    final static String top_rated = "top_rated";
-    final static String key = "api_key";
+    final static String BASEURL = "http://api.themoviedb.org/3/movie/";
+    final static String POPULAR = "popular";
+    final static String TOPRATED = "top_rated";
+    final static String KEY = "api_key";
 
-    public static URL popularMovie (String api_key) {
-        Uri.Builder uri = Uri.parse(BASE_URL)
+    public static URL popularMovie (String apiKey) {
+        Uri.Builder uri = Uri.parse(BASEURL)
                              .buildUpon()
-                             .appendEncodedPath(popular)
-                             .appendQueryParameter(key, api_key);
+                             .appendEncodedPath(POPULAR)
+                             .appendQueryParameter(KEY, apiKey);
 
         URL url = null;
         try {
@@ -36,11 +36,11 @@ public class NetworkUtility {
         return url;
     }
 
-    public static URL topRatedMovie (String api_key) {
-        Uri.Builder uri = Uri.parse(BASE_URL)
+    public static URL topRatedMovie (String apiKey) {
+        Uri.Builder uri = Uri.parse(BASEURL)
                              .buildUpon()
-                             .appendPath(top_rated)
-                             .appendQueryParameter(key, api_key);
+                             .appendPath(TOPRATED)
+                             .appendQueryParameter(KEY, apiKey);
         URL url = null;
         try {
             url = new URL(uri.toString());

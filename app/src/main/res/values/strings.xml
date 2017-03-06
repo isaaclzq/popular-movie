@@ -3,6 +3,7 @@
     <!--main.xml-->
     <string name="popularity">Popularity</string>
     <string name="top_rate">Top_rate</string>
+    <string name="no_network_connection">No Network Connection</string>
 
 
 </resources>

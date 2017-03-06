@@ -12,7 +12,7 @@ public class Movie implements Parcelable{
 
 
     final static private String BASE_URL = "http://image.tmdb.org/t/p/";
-    final static private String size = "w185/";
+    final static private String SIZE = "w185/";
 
     private String original_title;
     private String thumnail;
@@ -55,7 +55,7 @@ public class Movie implements Parcelable{
     public String getPosterUrl() {
         Uri.Builder uri = Uri.parse(BASE_URL)
                 .buildUpon()
-                .appendEncodedPath(size)
+                .appendEncodedPath(SIZE)
                 .appendEncodedPath(thumnail);
         return uri.toString();
     }

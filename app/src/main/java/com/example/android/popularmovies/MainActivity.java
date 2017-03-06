@@ -8,7 +8,9 @@ import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import org.json.JSONObject;
 
@@ -21,6 +23,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     private String intentDataKey = "movie";
     private String APIKEY = "";
     private int WIDTHDIVIDER = 400;
+    private TextView mNetworkConnection;
 
     public interface AsyncTaskCompleteListener<T> {
         public void onTaskComplete(T result);
@@ -35,6 +38,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
                 mMovieAdapter.notifyDataSetChanged();
             } else {
                 mMovieAdapter.setmMovieData(null);
+                mNetworkConnection.setVisibility(View.VISIBLE);
+                mProgressBar.setVisibility(View.INVISIBLE);
             }
         }
     }
@@ -46,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
         mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        mNetworkConnection = (TextView) findViewById(R.id.no_internet);
 
         GridLayoutManager layoutManager = new GridLayoutManager(this, numberOfColumns(WIDTHDIVIDER));
         mRecyclerView.setLayoutManager(layoutManager);

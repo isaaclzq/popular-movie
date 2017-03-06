@@ -21,14 +21,16 @@ import java.util.ArrayList;
 
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHolder> {
 
+    private final String RESULTS = "results";
+    private final String TITLE = "original_title";
+    private final String POSTER = "poster_path";
+    private final String OVERVIEW = "overview";
+    private final String VOTE = "vote_average";
+    private final String RELEASE = "release_date";
+
     private ArrayList<Movie> mMovieData;
     private final MovieAdapterOnClickHandler mClickHandler;
-    private final String key_results = "results";
-    private final String title = "original_title";
-    private final String poster = "poster_path";
-    private final String overview = "overview";
-    private final String vote = "vote_average";
-    private final String release = "release_date";
+
 
     public interface MovieAdapterOnClickHandler {
         void onClick (Movie movie);
@@ -52,7 +54,11 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
     public void onBindViewHolder(MovieViewHolder holder, int position) {
         Movie movie = mMovieData.get(position);
         String url = movie.getPosterUrl();
-        Picasso.with(holder.mImageView.getContext()).load(url).into(holder.mImageView);
+        Context context = holder.mImageView.getContext();
+        Picasso.with(context).load(url)
+                             .placeholder(R.drawable.empty)
+                             .error(R.drawable.empty)
+                             .into(holder.mImageView);
     }
 
 
@@ -82,15 +88,15 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         if (jsonObject != null) {
             try {
                 mMovieData.clear();
-                JSONArray jsonArray = jsonObject.getJSONArray(key_results);
+                JSONArray jsonArray = jsonObject.getJSONArray(RESULTS);
                 JSONObject object;
                 for (int i = 0; i < jsonArray.length(); i++) {
                     object = jsonArray.getJSONObject(i);
-                    mMovieData.add(new Movie(object.getString(title),
-                                             object.getString(poster),
-                                             object.getString(overview),
-                                             object.getString(vote),
-                                             object.getString(release)));
+                    mMovieData.add(new Movie(object.getString(TITLE),
+                                             object.getString(POSTER),
+                                             object.getString(OVERVIEW),
+                                             object.getString(VOTE),
+                                             object.getString(RELEASE)));
                 }
             } catch (JSONException e) {
                 e.printStackTrace();

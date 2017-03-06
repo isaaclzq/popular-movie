@@ -25,8 +25,8 @@ public class DetailActivity extends AppCompatActivity {
     @BindView(R.id.vote_average) TextView mVote;
     @BindView(R.id.overview_text) TextView mOverView;
 
-    final static String KEY = "movie";
-    final static String SCALE = "/10";
+    final static private String KEY = "movie";
+    final static private String SCALE = "/10";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -39,7 +39,10 @@ public class DetailActivity extends AppCompatActivity {
         Movie movie = (Movie) getIntent().getParcelableExtra(KEY);
 
         mTitle.setText(movie.getOriginal_title());
-        Picasso.with(this).load(movie.getThumnail()).into(mPoster);
+        Picasso.with(this).load(movie.getThumnail())
+                          .placeholder(R.drawable.empty)
+                          .error(R.drawable.empty)
+                          .into(mPoster);
         mDate.setText(movie.getRelease_date());
         mVote.setText(movie.getVote_average() + SCALE);
         mOverView.setText(movie.getOverview());

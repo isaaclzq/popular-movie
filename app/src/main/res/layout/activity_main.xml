@@ -5,6 +5,15 @@
     android:layout_height="match_parent"
     tools:context="com.example.android.popularmovies.MainActivity">
 
+    <TextView
+        android:id="@+id/no_internet"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible"
+        android:gravity="center"
+        android:textSize="24sp"
+        android:text="@string/no_network_connection"/>
+
     <ProgressBar
         android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
