@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Popular Movies</string>
+    <!--main.xml-->
+    <string name="popularity">Popularity</string>
+    <string name="top_rate">Top_rate</string>
+
+
+</resources>
