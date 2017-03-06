@@ -10,35 +10,34 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+
 /**
  * Created by Isaac on 3/3/17.
  */
 
 public class DetailActivity extends AppCompatActivity {
 
+    @BindView(R.id.original_title) TextView mTitle;
+    @BindView(R.id.poster_view) ImageView mPoster;
+    @BindView(R.id.release_date) TextView mDate;
+    @BindView(R.id.vote_average) TextView mVote;
+    @BindView(R.id.overview_text) TextView mOverView;
+
     final static String KEY = "movie";
     final static String SCALE = "/10";
-
-    private TextView mTitle;
-    private ImageView mPoster;
-    private TextView mDate;
-    private TextView mVote;
-    private TextView mOverView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
+        ButterKnife.bind(this);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        mTitle = (TextView) findViewById(R.id.original_title);
-        mPoster = (ImageView) findViewById(R.id.poster_view);
-        mDate = (TextView) findViewById(R.id.release_date);
-        mVote = (TextView) findViewById(R.id.vote_average);
-        mOverView = (TextView) findViewById(R.id.overview_text);
-
         Movie movie = (Movie) getIntent().getParcelableExtra(KEY);
+
         mTitle.setText(movie.getOriginal_title());
         Picasso.with(this).load(movie.getThumnail()).into(mPoster);
         mDate.setText(movie.getRelease_date());
