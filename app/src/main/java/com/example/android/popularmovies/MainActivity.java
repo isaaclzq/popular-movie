@@ -2,19 +2,28 @@ package com.example.android.popularmovies;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler{
+import java.io.IOException;
+import java.net.URL;
+
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<JSONObject>,
+        MovieAdapter.MovieAdapterOnClickHandler {
 
     private RecyclerView mRecyclerView;
     private MovieAdapter mMovieAdapter;
@@ -24,24 +33,61 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     private String APIKEY = "";
     private int WIDTHDIVIDER = 400;
     private TextView mNetworkConnection;
+    private int sortCriteria;
+    private String SORT_CRITERIA = "sortCriteria";
 
-    public interface AsyncTaskCompleteListener<T> {
-        public void onTaskComplete(T result);
+    final private int LOADER_ID = 22;
+    final private String URL_KEY = "key";
+
+    @Override
+    public Loader<JSONObject> onCreateLoader(int id, final Bundle args) {
+        return new AsyncTaskLoader<JSONObject>(this) {
+            @Override
+            protected void onStartLoading() {
+                super.onStartLoading();
+                if (args == null) {
+                    return;
+                }
+                mProgressBar.setVisibility(View.VISIBLE);
+                forceLoad();
+            }
+
+            @Override
+            public JSONObject loadInBackground() {
+                URL url = null;
+                String result = null;
+                JSONObject resultJson = null;
+                try {
+                    Log.v("load", "here");
+                    url = new URL(args.getString(URL_KEY));
+                    Log.v("loadInBackground", args.getString(URL_KEY));
+                    result = NetworkUtility.getResponseFromHttpUrl(url);
+                    resultJson = new JSONObject(result);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return resultJson;
+            }
+        };
     }
 
-    public class MovieQueryCompleteListener implements AsyncTaskCompleteListener<JSONObject> {
-
-        @Override
-        public void onTaskComplete(JSONObject result) {
-            if (result != null) {
-                mMovieAdapter.setmMovieData(result);
-                mMovieAdapter.notifyDataSetChanged();
-            } else {
-                mMovieAdapter.setmMovieData(null);
-                mNetworkConnection.setVisibility(View.VISIBLE);
-                mProgressBar.setVisibility(View.INVISIBLE);
-            }
+    @Override
+    public void onLoadFinished(Loader<JSONObject> loader, JSONObject result) {
+        if (result != null) {
+            mMovieAdapter.setmMovieData(result);
+            mMovieAdapter.notifyDataSetChanged();
+        } else {
+            mMovieAdapter.setmMovieData(null);
+            mNetworkConnection.setVisibility(View.VISIBLE);
+            mProgressBar.setVisibility(View.INVISIBLE);
         }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<JSONObject> loader) {
+
     }
 
     @Override
@@ -60,7 +106,11 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         mMovieAdapter = new MovieAdapter(this);
         mRecyclerView.setAdapter(mMovieAdapter);
 
-        loadMovieData(R.id.popular);
+        if (savedInstanceState != null) {
+            loadMovieData(savedInstanceState.getInt(SORT_CRITERIA));
+        } else {
+            loadMovieData(R.id.popular);
+        }
     }
 
     private int numberOfColumns(int widthDivider) {
@@ -74,17 +124,27 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
 
     private boolean loadMovieData (int itemSelected) {
+        Bundle bundle = new Bundle();
+
         switch (itemSelected) {
             case R.id.popular:
-                new MovieQueryTask(this, new MovieQueryCompleteListener(), mProgressBar)
-                                .execute(NetworkUtility.popularMovie(APIKEY));
+                sortCriteria = R.id.popular;
+                bundle.putString(URL_KEY, NetworkUtility.popularMovie(APIKEY).toString());
                 break;
             case R.id.rate:
-                new MovieQueryTask(this, new MovieQueryCompleteListener(), mProgressBar)
-                                .execute(NetworkUtility.topRatedMovie(APIKEY));
+                sortCriteria = R.id.rate;
+                bundle.putString(URL_KEY, NetworkUtility.topRatedMovie(APIKEY).toString());
                 break;
             default:
                 return false;
+        }
+
+        LoaderManager loaderManager = getSupportLoaderManager();
+        Loader<JSONObject> loader = loaderManager.getLoader(LOADER_ID);
+        if (loader == null) {
+            loaderManager.initLoader(LOADER_ID, bundle, this);
+        } else {
+            loaderManager.restartLoader(LOADER_ID, bundle, this);
         }
         return true;
     }
@@ -106,5 +166,11 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemSelected = item.getItemId();
         return loadMovieData(itemSelected);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(SORT_CRITERIA, sortCriteria);
     }
 }
