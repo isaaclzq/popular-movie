@@ -79,6 +79,7 @@
             android:textSize="14dp"
             tools:text="helloo world!"
             android:textColor="@android:color/darker_gray"/>
+
     </LinearLayout>
 
 </android.support.v4.widget.NestedScrollView>

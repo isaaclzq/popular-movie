@@ -96,7 +96,8 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
                                              object.getString(POSTER),
                                              object.getString(OVERVIEW),
                                              object.getString(VOTE),
-                                             object.getString(RELEASE)));
+                                             object.getString(RELEASE),
+                                             object.getString("id")));
                 }
             } catch (JSONException e) {
                 e.printStackTrace();

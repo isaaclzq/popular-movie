@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -46,6 +47,9 @@ public class DetailActivity extends AppCompatActivity {
         mDate.setText(movie.getRelease_date());
         mVote.setText(movie.getVote_average() + SCALE);
         mOverView.setText(movie.getOverview());
+
+        Log.v("isaac", "number of movie : " + movie.getVideo().size() + "");
+        Log.v("isaac", "number of reviews : " + movie.getReview().get(0) + "");
     }
 
     @Override
@@ -56,5 +60,11 @@ public class DetailActivity extends AppCompatActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Log.v("detail", "pressing");
     }
 }
