@@ -19,12 +19,13 @@ public class NetworkUtility {
     final static String POPULAR = "popular";
     final static String TOPRATED = "top_rated";
     final static String KEY = "api_key";
+    final static public String APIKEY = "";
 
-    public static URL popularMovie (String apiKey) {
+    public static URL popularMovie () {
         Uri.Builder uri = Uri.parse(BASEURL)
                              .buildUpon()
                              .appendEncodedPath(POPULAR)
-                             .appendQueryParameter(KEY, apiKey);
+                             .appendQueryParameter(KEY, APIKEY);
 
         URL url = null;
         try {
@@ -36,11 +37,11 @@ public class NetworkUtility {
         return url;
     }
 
-    public static URL topRatedMovie (String apiKey) {
+    public static URL topRatedMovie () {
         Uri.Builder uri = Uri.parse(BASEURL)
                              .buildUpon()
                              .appendPath(TOPRATED)
-                             .appendQueryParameter(KEY, apiKey);
+                             .appendQueryParameter(KEY, APIKEY);
         URL url = null;
         try {
             url = new URL(uri.toString());
