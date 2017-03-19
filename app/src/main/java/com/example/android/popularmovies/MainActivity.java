@@ -1,7 +1,6 @@
 package com.example.android.popularmovies;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -16,14 +15,11 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.LinkedList;
 
 public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler {
 
@@ -37,8 +33,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     private int sortCriteria;
     private String SORT_CRITERIA = "sortCriteria";
     final private int LOADER_ID = 22;
-    final private int MOVIE_EXTRA = 23;
     final private String URL_KEY = "key";
+    final private int SAVED = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,20 +98,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     @Override
     public void onClick(Movie movie) {
         Intent i = new Intent(this, DetailActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putString("id", movie.getId());
-        if (!movie.hasTrailersAndReviews()) {
-            LoaderManager loaderManager = getSupportLoaderManager();
-            Loader<JSONObject> loader = loaderManager.getLoader(MOVIE_EXTRA);
-            if (loader == null) {
-                loaderManager.initLoader(MOVIE_EXTRA, bundle, new MovieExtraAsyncTaskloader(movie, i));
-            } else {
-                loaderManager.restartLoader(MOVIE_EXTRA, bundle, new MovieExtraAsyncTaskloader(movie, i));
-            }
-        } else {
-            i.putExtra(intentDataKey, movie);
-            startActivity(i);
-        }
+        i.putExtra(intentDataKey, movie);
+        startActivityForResult(i, SAVED);
     }
 
     @Override
@@ -135,6 +119,15 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         super.onSaveInstanceState(outState);
         outState.putInt(SORT_CRITERIA, sortCriteria);
     }
+
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        if (requestCode == SAVED) {
+//            if (resultCode == RESULT_OK) {
+//
+//            }
+//        }
+//    }
 
     private class MovieInfoAsyncTaskloader implements LoaderManager.LoaderCallbacks<JSONObject> {
 
@@ -188,101 +181,5 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         }
     }
 
-    private class MovieExtraAsyncTaskloader implements LoaderManager.LoaderCallbacks<LinkedList<JSONObject>> {
 
-        Movie curMovie;
-        Intent mIntent;
-
-        public MovieExtraAsyncTaskloader(Movie movie, Intent intent) {
-            this.curMovie = movie;
-            this.mIntent = intent;
-        }
-
-        @Override
-        public Loader<LinkedList<JSONObject>> onCreateLoader(int id, final Bundle args) {
-            return new AsyncTaskLoader<LinkedList<JSONObject>>(MainActivity.this) {
-                @Override
-                protected void onStartLoading() {
-                    super.onStartLoading();
-                    if (args == null) {
-                        return;
-                    }
-                    mProgressBar.setVisibility(View.VISIBLE);
-                    forceLoad();
-                }
-
-                @Override
-                public LinkedList<JSONObject> loadInBackground() {
-                    if (args == null) {
-                        return null;
-                    }
-                    String id = args.getString("id");
-                    LinkedList<JSONObject> result = new LinkedList<>();
-                    Uri.Builder uriVideo = Uri.parse(NetworkUtility.BASEURL)
-                            .buildUpon()
-                            .appendEncodedPath(id)
-                            .appendEncodedPath("videos")
-                            .appendQueryParameter(NetworkUtility.KEY, NetworkUtility.APIKEY);
-                    Uri.Builder uriReview = Uri.parse(NetworkUtility.BASEURL)
-                            .buildUpon()
-                            .appendEncodedPath(id)
-                            .appendEncodedPath("reviews")
-                            .appendQueryParameter(NetworkUtility.KEY, NetworkUtility.APIKEY);
-                    try {
-                        URL urlVideo = new URL(uriVideo.toString());
-                        URL urlReview = new URL(uriReview.toString());
-                        String videoResult = NetworkUtility.getResponseFromHttpUrl(urlVideo);
-                        String reviewResult = NetworkUtility.getResponseFromHttpUrl(urlReview);
-                        JSONObject videoJson = new JSONObject(videoResult);
-                        JSONObject reviewJson = new JSONObject(reviewResult);
-                        result.add(videoJson);
-                        result.add(reviewJson);
-                        return result;
-                    } catch (MalformedURLException e) {
-                        e.printStackTrace();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    return null;
-                }
-            };
-        }
-
-        @Override
-        public void onLoadFinished(Loader<LinkedList<JSONObject>> loader, LinkedList<JSONObject> data) {
-            if (data == null) {
-                return;
-            }
-            JSONObject videoJson = data.get(0);
-            JSONObject reviewJson = data.get(1);
-            YouTubeVideo youTubeVideo;
-            Review review;
-            JSONArray jsonArray;
-            JSONObject jsonObject;
-            try {
-                jsonArray = videoJson.getJSONArray("results");
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    jsonObject = jsonArray.getJSONObject(i);
-                    curMovie.addTrailer(new YouTubeVideo(jsonObject.getString("key")));
-                }
-                jsonArray = reviewJson.getJSONArray("results");
-                for (int j = 0; j < jsonArray.length(); j++) {
-                    jsonObject = jsonArray.getJSONObject(j);
-                    curMovie.addReview((new Review(jsonObject.getString("author"), jsonObject.getString("content"))));
-                }
-                mIntent.putExtra(intentDataKey, curMovie);
-                startActivity(mIntent);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-        @Override
-        public void onLoaderReset(Loader<LinkedList<JSONObject>> loader) {
-
-        }
-    }
 }

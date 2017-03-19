@@ -49,10 +49,10 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/release_date"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Headline"
                     android:layout_alignParentLeft="true"
                     android:layout_marginBottom="14dp"
                     android:textColor="@android:color/darker_gray"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Headline"
                     android:layout_marginLeft="18dp"
                     android:layout_marginTop="24dp"
                     tools:text="2015"/>
@@ -61,8 +61,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/vote_average"
-                    android:textColor="@android:color/darker_gray"
                     tools:text="8.1/10"
+                    android:textColor="@android:color/darker_gray"
                     android:textAppearance="@style/Base.TextAppearance.AppCompat.Body1"
                     android:layout_below="@id/release_date"
                     android:layout_marginLeft="18dp"/>
@@ -79,6 +79,22 @@
             android:textSize="14dp"
             tools:text="helloo world!"
             android:textColor="@android:color/darker_gray"/>
+
+        <TextView
+            android:id="@+id/video_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Video"
+            android:textSize="36sp"
+            android:visibility="invisible"/>
+
+        <TextView
+            android:id="@+id/review_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Review"
+            android:textSize="36sp"
+            android:visibility="invisible"/>
 
     </LinearLayout>
 

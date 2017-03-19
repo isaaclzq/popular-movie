@@ -4,8 +4,6 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import java.util.LinkedList;
-
 /**
  * Created by Isaac on 3/3/17.
  */
@@ -22,8 +20,7 @@ public class Movie implements Parcelable{
     private String vote_average;
     private String release_date;
     private String id;
-    private LinkedList<YouTubeVideo> trailers;
-    private LinkedList<Review> reviews;
+    private int saved;
 
     public Movie(String original_title, String thumnail, String overview, String vote_average, String release_date, String id) {
         this.original_title = original_title;
@@ -32,8 +29,7 @@ public class Movie implements Parcelable{
         this.vote_average = vote_average;
         this.release_date = release_date;
         this.id = id;
-        this.trailers = new LinkedList<>();
-        this.reviews = new LinkedList<>();
+        this.saved = 0;
     }
 
     public String getId () {
@@ -60,24 +56,8 @@ public class Movie implements Parcelable{
         return release_date;
     }
 
-    public boolean hasTrailersAndReviews () {
-        return !trailers.isEmpty() && !reviews.isEmpty();
-    }
-
-    public void addTrailer (YouTubeVideo youTubeVideo) {
-        this.trailers.add(youTubeVideo);
-    }
-
-    public void addReview (Review review) {
-        this.reviews.add(review);
-    }
-
-    public LinkedList<YouTubeVideo> getVideo () {
-        return trailers;
-    }
-
-    public LinkedList<Review> getReview () {
-        return reviews;
+    public boolean isSaved() {
+        return saved == 1;
     }
 
     public Movie() {
@@ -104,8 +84,8 @@ public class Movie implements Parcelable{
         dest.writeString(overview);
         dest.writeString(vote_average);
         dest.writeString(release_date);
-        dest.writeTypedList(trailers);
-        dest.writeTypedList(reviews);
+        dest.writeString(id);
+        dest.writeInt(saved);
     }
 
     private Movie(Parcel in) {
@@ -114,10 +94,8 @@ public class Movie implements Parcelable{
         overview = in.readString();
         vote_average = in.readString();
         release_date = in.readString();
-        trailers = new LinkedList<>();
-        reviews = new LinkedList<>();
-        in.readTypedList(trailers, YouTubeVideo.CREATOR);
-        in.readTypedList(reviews, Review.CREATOR);
+        id = in.readString();
+        saved = in.readInt();
     }
 
     public static final Parcelable.Creator<Movie> CREATOR = new Parcelable.Creator<Movie>() {

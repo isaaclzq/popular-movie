@@ -15,21 +15,21 @@ public class YouTubeVideo implements Parcelable {
 
     private static final String YOUTUBE = "https://www.youtube.com/";
     private static final String QUERY = "v";
-    private URL address;
+    private String address;
 
     public YouTubeVideo(String address) {
-        this.address = getCompleteUrl(address);
+        this.address = address;
+    }
+
+    public String getAddress() {
+        return address;
     }
 
     private YouTubeVideo(Parcel in) {
-        try {
-            address = new URL(in.readString());
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+        address = in.readString();
     }
 
-    private URL getCompleteUrl (String address) {
+    public URL getCompleteUrl (String address) {
         Uri.Builder uri = Uri.parse(YOUTUBE).buildUpon().appendQueryParameter(QUERY, address);
         try {
             URL url = new URL(uri.toString());
