@@ -1,6 +1,10 @@
 package com.example.android.popularmovies;
 
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
@@ -9,11 +13,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import com.example.android.popularmovies.data.MovieDbContract;
+import com.example.android.popularmovies.data.MovieDbHelper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -35,6 +43,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     final private int LOADER_ID = 22;
     final private String URL_KEY = "key";
     final private int SAVED = 1;
+    private ContentResolver mContentResolver;
+    private SQLiteDatabase mDb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +54,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         mNetworkConnection = (TextView) findViewById(R.id.no_internet);
+        mContentResolver = getContentResolver();
+        mDb = (new MovieDbHelper(this)).getWritableDatabase();
 
         GridLayoutManager layoutManager = new GridLayoutManager(this, numberOfColumns(WIDTHDIVIDER));
         mRecyclerView.setLayoutManager(layoutManager);
@@ -71,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
     private boolean loadMovieData(int itemSelected) {
         Bundle bundle = new Bundle();
+        boolean isCursor = false;
 
         switch (itemSelected) {
             case R.id.popular:
@@ -81,16 +94,29 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
                 sortCriteria = R.id.rate;
                 bundle.putString(URL_KEY, NetworkUtility.topRatedMovie().toString());
                 break;
+            case R.id.favorite:
+                sortCriteria = R.id.favorite;
+                bundle.putString(URL_KEY, MovieDbContract.MovieEntry.CONTENT_URI.toString());
+                isCursor = true;
+                break;
             default:
                 return false;
         }
 
         LoaderManager loaderManager = getSupportLoaderManager();
         Loader<JSONObject> loader = loaderManager.getLoader(LOADER_ID);
-        if (loader == null) {
-            loaderManager.initLoader(LOADER_ID, bundle, new MovieInfoAsyncTaskloader());
+        if (isCursor) {
+            if (loader == null) {
+                loaderManager.initLoader(LOADER_ID, bundle, new MovieDbAsyncTaskloader());
+            } else {
+                loaderManager.restartLoader(LOADER_ID, bundle, new MovieDbAsyncTaskloader());
+            }
         } else {
-            loaderManager.restartLoader(LOADER_ID, bundle, new MovieInfoAsyncTaskloader());
+            if (loader == null) {
+                loaderManager.initLoader(LOADER_ID, bundle, new MovieInfoAsyncTaskloader());
+            } else {
+                loaderManager.restartLoader(LOADER_ID, bundle, new MovieInfoAsyncTaskloader());
+            }
         }
         return true;
     }
@@ -120,14 +146,55 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         outState.putInt(SORT_CRITERIA, sortCriteria);
     }
 
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        if (requestCode == SAVED) {
-//            if (resultCode == RESULT_OK) {
-//
-//            }
-//        }
-//    }
+    private class MovieDbAsyncTaskloader implements LoaderManager.LoaderCallbacks<Cursor> {
+
+        @Override
+        public Loader<Cursor> onCreateLoader(int id, final Bundle args) {
+            return new AsyncTaskLoader<Cursor>(MainActivity.this) {
+                @Override
+                protected void onStartLoading() {
+                    super.onStartLoading();
+                    if (args == null) {
+                        return;
+                    }
+                    mProgressBar.setVisibility(View.VISIBLE);
+                    forceLoad();
+                }
+
+                @Override
+                public Cursor loadInBackground() {
+                    Uri uri = Uri.parse(args.getString(URL_KEY));
+                    Log.v("MainActivity", uri.toString());
+                    return mContentResolver.query(uri, null,null,null,null);
+                }
+            };
+        }
+
+        @Override
+        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+            Log.v("MainActivity", "onloadfinished get here " + data.getCount());
+            if (data != null && data.getCount() > 0) {
+                Log.v("MainActivity", "onloadfinished get here 1");
+                mMovieAdapter.setmMovieData(data);
+                mNetworkConnection.setVisibility(View.INVISIBLE);
+                mProgressBar.setVisibility(View.INVISIBLE);
+                data.close();
+            } else {
+                mMovieAdapter.setEmptyData();
+                Log.v("MainActivity", "onloadfinished get here 2");
+                mNetworkConnection.setText("YOU HAVEN'T SAVED ANY MOVIES YET!");
+                mNetworkConnection.setVisibility(View.VISIBLE);
+                mProgressBar.setVisibility(View.INVISIBLE);
+                data.close();
+            }
+            mMovieAdapter.notifyDataSetChanged();
+        }
+
+        @Override
+        public void onLoaderReset(Loader<Cursor> loader) {
+
+        }
+    }
 
     private class MovieInfoAsyncTaskloader implements LoaderManager.LoaderCallbacks<JSONObject> {
 
@@ -169,7 +236,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
                 mMovieAdapter.setmMovieData(data);
                 mMovieAdapter.notifyDataSetChanged();
             } else {
-                mMovieAdapter.setmMovieData(null);
+                mMovieAdapter.setEmptyData();
                 mNetworkConnection.setVisibility(View.VISIBLE);
                 mProgressBar.setVisibility(View.INVISIBLE);
             }

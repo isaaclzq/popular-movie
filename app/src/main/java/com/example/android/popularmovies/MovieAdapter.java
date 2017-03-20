@@ -1,6 +1,7 @@
 package com.example.android.popularmovies;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -84,6 +85,10 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         }
     }
 
+    public void setEmptyData () {
+        mMovieData.clear();
+    }
+
     public void setmMovieData (JSONObject jsonObject) {
         if (jsonObject != null) {
             try {
@@ -101,6 +106,16 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    public void setmMovieData (Cursor cursor) {
+        if (cursor != null) {
+            mMovieData.clear();
+//            mMovieData.add(new Movie(cursor));
+            while (cursor.moveToNext()) {
+                mMovieData.add(new Movie(cursor));
             }
         }
     }

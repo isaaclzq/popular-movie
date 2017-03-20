@@ -1,8 +1,12 @@
 package com.example.android.popularmovies;
 
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
+
+import com.example.android.popularmovies.data.MovieDbContract;
 
 /**
  * Created by Isaac on 3/3/17.
@@ -30,6 +34,17 @@ public class Movie implements Parcelable{
         this.release_date = release_date;
         this.id = id;
         this.saved = 0;
+
+        Log.v("Movie.java", original_title + ", " + thumnail);
+    }
+
+    public Movie(Cursor cursor) {
+         this(cursor.getString(cursor.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_MOVIE_TITLE)),
+                cursor.getString(cursor.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_MOVIE_THUMNAIL)),
+                cursor.getString(cursor.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_MOVIE_OVERVIEW)),
+                cursor.getString(cursor.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_MOVIE_VOTE)),
+                cursor.getString(cursor.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_MOVIE_RELEASEDATE)),
+                cursor.getString(cursor.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_MOVIE_ID)));
     }
 
     public String getId () {
@@ -80,7 +95,7 @@ public class Movie implements Parcelable{
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(original_title);
-        dest.writeString(getPosterUrl());
+        dest.writeString(thumnail);
         dest.writeString(overview);
         dest.writeString(vote_average);
         dest.writeString(release_date);

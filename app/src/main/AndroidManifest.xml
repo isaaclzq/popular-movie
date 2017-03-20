@@ -26,6 +26,11 @@
                 <data android:host="www.youtube.com" android:scheme="http" />
             </intent-filter>
         </activity>
+        
+        <provider
+            android:authorities="com.example.android.popularmovies"
+            android:name="com.example.android.popularmovies.data.MovieContentProvider"
+            android:exported="false"/>
     </application>
 
 </manifest>

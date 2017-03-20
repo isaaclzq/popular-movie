@@ -1,7 +1,10 @@
 package com.example.android.popularmovies;
 
 import android.content.ActivityNotFoundException;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -21,6 +24,8 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.example.android.popularmovies.data.MovieDbContract;
+import com.example.android.popularmovies.data.MovieDbHelper;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -61,6 +66,8 @@ public class DetailActivity extends AppCompatActivity {
     private String mId;
     private boolean mFavorOn;
     final private int LOADER_ID = 22;
+    private SQLiteDatabase mDb;
+    private ContentResolver mResolver;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -73,10 +80,14 @@ public class DetailActivity extends AppCompatActivity {
         mVideoList = new LinkedList<>();
         mReviewList = new LinkedList<>();
 
-        Movie movie = (Movie) getIntent().getParcelableExtra(KEY);
+        MovieDbHelper movieDbHelper = new MovieDbHelper(this);
+        mDb = movieDbHelper.getWritableDatabase();
+        mResolver = getContentResolver();
+
+        final Movie movie = (Movie) getIntent().getParcelableExtra(KEY);
 
         mTitle.setText(movie.getOriginal_title());
-        Picasso.with(this).load(movie.getThumnail())
+        Picasso.with(this).load(movie.getPosterUrl())
                           .placeholder(R.drawable.empty)
                           .error(R.drawable.empty)
                           .into(mPoster);
@@ -85,6 +96,8 @@ public class DetailActivity extends AppCompatActivity {
         mOverView.setText(movie.getOverview());
         mId = movie.getId();
         mFavorOn = movie.isSaved();
+
+        final ContentValues cv = new ContentValues();
 
         mFavorite.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -96,6 +109,13 @@ public class DetailActivity extends AppCompatActivity {
                 } else {
                     mFavorite.setBackgroundColor(Color.parseColor("#ffff00"));
                     mFavorite.setText("Saved");
+                    cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_OVERVIEW, movie.getOverview());
+                    cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_TITLE, movie.getOriginal_title());
+                    cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_VOTE, movie.getVote_average());
+                    cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_RELEASEDATE, movie.getRelease_date());
+                    cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_THUMNAIL, movie.getThumnail());
+                    cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_ID, movie.getId());
+                    mResolver.insert(MovieDbContract.MovieEntry.CONTENT_URI, cv);
                     mFavorOn = true;
                 }
             }
@@ -131,14 +151,6 @@ public class DetailActivity extends AppCompatActivity {
         mReviewAdapter = new ReviewAdapter(this, mReviewList);
         mReview.setAdapter(mReviewAdapter);
     }
-
-//    @Override
-//    public void onBackPressed() {
-//        Intent intent = new Intent();
-//        intent.putExtra("saved", mFavorOn);
-//        setResult(Activity.RESULT_OK, intent);
-//        super.onBackPressed();
-//    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -235,6 +247,19 @@ public class DetailActivity extends AppCompatActivity {
         public void onLoaderReset(Loader<LinkedList<JSONObject>> loader) {
 
         }
+    }
+
+    private long saveMovie(Movie movie) {
+        ContentValues cv = new ContentValues();
+
+        cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_OVERVIEW, movie.getOverview());
+        cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_RELEASEDATE, movie.getRelease_date());
+        cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_THUMNAIL, movie.getThumnail());
+        cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_TITLE, movie.getOriginal_title());
+        cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_VOTE, movie.getVote_average());
+        cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_ID, movie.getId());
+
+        return mDb.insert(MovieDbContract.MovieEntry.TABLE_NAME, null, cv);
     }
 
     public static void setListViewHeightBasedOnChildren(ListView listView) {
