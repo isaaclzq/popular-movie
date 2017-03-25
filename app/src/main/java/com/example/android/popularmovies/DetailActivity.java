@@ -4,7 +4,6 @@ import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,9 +22,16 @@ import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.example.android.popularmovies.data.MovieDbContract;
-import com.example.android.popularmovies.data.MovieDbHelper;
+import com.example.android.popularmovies.adapter.ReviewAdapter;
+import com.example.android.popularmovies.adapter.TrailerAdapter;
+import com.example.android.popularmovies.data.Movie;
+import com.example.android.popularmovies.data.Review;
+import com.example.android.popularmovies.data.YouTubeVideo;
+import com.example.android.popularmovies.database.MovieContentProvider;
+import com.example.android.popularmovies.database.MovieDbContract;
+import com.example.android.popularmovies.utility.NetworkUtility;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -55,36 +61,30 @@ public class DetailActivity extends AppCompatActivity {
     @BindView(R.id.movie_review) ListView mReview;
     @BindView(R.id.movie_favorite) Button mFavorite;
 
-    final static private String KEY = "movie";
-    final static private String SCALE = "/10";
-
     private LinkedList<YouTubeVideo> mVideoList;
     private LinkedList<Review> mReviewList;
     private TrailerAdapter mTrailerAdapter;
     private ReviewAdapter mReviewAdapter;
-    private String backgroundColor;
     private String mId;
     private boolean mFavorOn;
     final private int LOADER_ID = 22;
-    private SQLiteDatabase mDb;
     private ContentResolver mResolver;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_detail_portrait);
+        setContentView(R.layout.activity_detail);
         ButterKnife.bind(this);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        final Movie movie = getIntent().getParcelableExtra(getString(R.string.detail_key));
+        final ContentValues cv = new ContentValues();
+
+
         mVideoList = new LinkedList<>();
         mReviewList = new LinkedList<>();
-
-        MovieDbHelper movieDbHelper = new MovieDbHelper(this);
-        mDb = movieDbHelper.getWritableDatabase();
         mResolver = getContentResolver();
-
-        final Movie movie = (Movie) getIntent().getParcelableExtra(KEY);
 
         mTitle.setText(movie.getOriginal_title());
         Picasso.with(this).load(movie.getPosterUrl())
@@ -92,23 +92,29 @@ public class DetailActivity extends AppCompatActivity {
                           .error(R.drawable.empty)
                           .into(mPoster);
         mDate.setText(movie.getRelease_date());
-        mVote.setText(movie.getVote_average() + SCALE);
+        mVote.setText(movie.getVote_average() + getString(R.string.detail_scale));
         mOverView.setText(movie.getOverview());
         mId = movie.getId();
-        mFavorOn = movie.isSaved();
+        if (MovieContentProvider.isMovieSaved(mId)) {
+            mFavorOn = true;
+            buttonUiSaved();
+        } else {
+            mFavorOn = false;
+            buttonUiUnsaved();
+        }
 
-        final ContentValues cv = new ContentValues();
 
         mFavorite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mFavorOn) {
-                    mFavorite.setBackgroundResource(android.R.color.holo_green_dark);
-                    mFavorite.setText("Mark As Favorite");
+                    buttonUiSaved();
+                    Uri uri = MovieDbContract.MovieEntry.CONTENT_URI.buildUpon().appendPath(movie.getId()).build();
+                    mResolver.delete(uri, null, null);
                     mFavorOn = false;
+                    Toast.makeText(DetailActivity.this, R.string.detail_removed, Toast.LENGTH_SHORT).show();
                 } else {
-                    mFavorite.setBackgroundColor(Color.parseColor("#ffff00"));
-                    mFavorite.setText("Saved");
+                    buttonUiUnsaved();
                     cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_OVERVIEW, movie.getOverview());
                     cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_TITLE, movie.getOriginal_title());
                     cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_VOTE, movie.getVote_average());
@@ -117,6 +123,7 @@ public class DetailActivity extends AppCompatActivity {
                     cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_ID, movie.getId());
                     mResolver.insert(MovieDbContract.MovieEntry.CONTENT_URI, cv);
                     mFavorOn = true;
+                    Toast.makeText(DetailActivity.this, getString(R.string.detail_saved), Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -152,6 +159,20 @@ public class DetailActivity extends AppCompatActivity {
         mReview.setAdapter(mReviewAdapter);
     }
 
+
+    // UI text and background color for saved movies
+    private void buttonUiSaved () {
+        mFavorite.setBackgroundColor(Color.parseColor(getString(R.string.detail_saved_color)));
+        mFavorite.setText(R.string.detail_saved);
+    }
+
+
+    // UI text and background color for non-saved movies
+    private void buttonUiUnsaved () {
+        mFavorite.setBackgroundResource(android.R.color.holo_green_dark);
+        mFavorite.setText(R.string.detail_marked);
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -185,12 +206,12 @@ public class DetailActivity extends AppCompatActivity {
                     Uri.Builder uriVideo = Uri.parse(NetworkUtility.BASEURL)
                             .buildUpon()
                             .appendEncodedPath(mId)
-                            .appendEncodedPath("videos")
+                            .appendEncodedPath(getString(R.string.detail_videos))
                             .appendQueryParameter(NetworkUtility.KEY, NetworkUtility.APIKEY);
                     Uri.Builder uriReview = Uri.parse(NetworkUtility.BASEURL)
                             .buildUpon()
                             .appendEncodedPath(mId)
-                            .appendEncodedPath("reviews")
+                            .appendEncodedPath(getString(R.string.detail_reviews))
                             .appendQueryParameter(NetworkUtility.KEY, NetworkUtility.APIKEY);
                     try {
                         URL urlVideo = new URL(uriVideo.toString());
@@ -224,15 +245,16 @@ public class DetailActivity extends AppCompatActivity {
             JSONArray jsonArray;
             JSONObject jsonObject;
             try {
-                jsonArray = videoJson.getJSONArray("results");
+                jsonArray = videoJson.getJSONArray(getString(R.string.detail_json_results));
                 for (int i = 0; i < jsonArray.length(); i++) {
                     jsonObject = jsonArray.getJSONObject(i);
-                    mVideoList.add(new YouTubeVideo(jsonObject.getString("key")));
+                    mVideoList.add(new YouTubeVideo(jsonObject.getString(getString(R.string.detail_json_key))));
                 }
-                jsonArray = reviewJson.getJSONArray("results");
+                jsonArray = reviewJson.getJSONArray(getString(R.string.detail_json_results));
                 for (int j = 0; j < jsonArray.length(); j++) {
                     jsonObject = jsonArray.getJSONObject(j);
-                    mReviewList.add((new Review(jsonObject.getString("author"), jsonObject.getString("content"))));
+                    mReviewList.add((new Review(jsonObject.getString(getString(R.string.detail_json_author)),
+                                                jsonObject.getString(getString(R.string.detail_json_content)))));
                 }
                 mTrailerAdapter.notifyDataSetChanged();
                 setListViewHeightBasedOnChildren(mVideo);
@@ -249,23 +271,9 @@ public class DetailActivity extends AppCompatActivity {
         }
     }
 
-    private long saveMovie(Movie movie) {
-        ContentValues cv = new ContentValues();
-
-        cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_OVERVIEW, movie.getOverview());
-        cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_RELEASEDATE, movie.getRelease_date());
-        cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_THUMNAIL, movie.getThumnail());
-        cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_TITLE, movie.getOriginal_title());
-        cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_VOTE, movie.getVote_average());
-        cv.put(MovieDbContract.MovieEntry.COLUMN_MOVIE_ID, movie.getId());
-
-        return mDb.insert(MovieDbContract.MovieEntry.TABLE_NAME, null, cv);
-    }
-
     public static void setListViewHeightBasedOnChildren(ListView listView) {
         ListAdapter listAdapter = listView.getAdapter();
         if (listAdapter == null) {
-            // pre-condition
             return;
         }
 

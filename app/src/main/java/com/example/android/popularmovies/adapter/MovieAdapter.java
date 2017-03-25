@@ -1,4 +1,4 @@
-package com.example.android.popularmovies;
+package com.example.android.popularmovies.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -8,6 +8,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.example.android.popularmovies.data.Movie;
+import com.example.android.popularmovies.R;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -22,15 +24,11 @@ import java.util.ArrayList;
 
 public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHolder> {
 
-    private final String RESULTS = "results";
-    private final String TITLE = "original_title";
-    private final String POSTER = "poster_path";
-    private final String OVERVIEW = "overview";
-    private final String VOTE = "vote_average";
-    private final String RELEASE = "release_date";
-
+    private ArrayList<Movie> mInUsedData;
     private ArrayList<Movie> mMovieData;
+    private ArrayList<Movie> mFavoriteData;
     private final MovieAdapterOnClickHandler mClickHandler;
+    private Context mContext;
 
 
     public interface MovieAdapterOnClickHandler {
@@ -38,7 +36,10 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
     }
 
     public MovieAdapter(MovieAdapterOnClickHandler handler) {
+        this.mContext = (Context) handler;
         this.mMovieData = new ArrayList<>();
+        this.mFavoriteData = new ArrayList<>();
+        this.mInUsedData = this.mMovieData;
         mClickHandler = handler;
     }
 
@@ -53,7 +54,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
 
     @Override
     public void onBindViewHolder(MovieViewHolder holder, int position) {
-        Movie movie = mMovieData.get(position);
+        Movie movie = mInUsedData.get(position);
         String url = movie.getPosterUrl();
         Context context = holder.mImageView.getContext();
         Picasso.with(context).load(url)
@@ -65,7 +66,7 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
 
     @Override
     public int getItemCount() {
-        return mMovieData.size();
+        return mInUsedData.size();
     }
 
     public class MovieViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
@@ -80,43 +81,49 @@ public class MovieAdapter extends RecyclerView.Adapter<MovieAdapter.MovieViewHol
         @Override
         public void onClick(View v) {
             int position = getAdapterPosition();
-            Movie movie = mMovieData.get(position);
+            Movie movie = mInUsedData.get(position);
             mClickHandler.onClick(movie);
         }
     }
 
     public void setEmptyData () {
-        mMovieData.clear();
+        mInUsedData.clear();
     }
 
     public void setmMovieData (JSONObject jsonObject) {
         if (jsonObject != null) {
             try {
                 mMovieData.clear();
-                JSONArray jsonArray = jsonObject.getJSONArray(RESULTS);
+                JSONArray jsonArray = jsonObject.getJSONArray(mContext.getString(R.string.mAdapter_results));
                 JSONObject object;
                 for (int i = 0; i < jsonArray.length(); i++) {
                     object = jsonArray.getJSONObject(i);
-                    mMovieData.add(new Movie(object.getString(TITLE),
-                                             object.getString(POSTER),
-                                             object.getString(OVERVIEW),
-                                             object.getString(VOTE),
-                                             object.getString(RELEASE),
-                                             object.getString("id")));
+                    mMovieData.add(new Movie(object.getString(mContext.getString(R.string.mAdapter_title)),
+                                             object.getString(mContext.getString(R.string.mAdapter_poster)),
+                                             object.getString(mContext.getString(R.string.mAdapter_overview)),
+                                             object.getString(mContext.getString(R.string.mAdapter_vote)),
+                                             object.getString(mContext.getString(R.string.mAdapter_release)),
+                                             object.getString(mContext.getString(R.string.mAdapter_id)), 0));
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
+
+        mInUsedData = mMovieData;
     }
 
-    public void setmMovieData (Cursor cursor) {
+
+    public void setmMovieData (Cursor cursor, boolean swap) {
         if (cursor != null) {
-            mMovieData.clear();
-//            mMovieData.add(new Movie(cursor));
+            mFavoriteData.clear();
             while (cursor.moveToNext()) {
-                mMovieData.add(new Movie(cursor));
+                mFavoriteData.add(new Movie(cursor));
             }
+        }
+
+        if (swap) {
+            mInUsedData = mFavoriteData;
         }
     }
 }

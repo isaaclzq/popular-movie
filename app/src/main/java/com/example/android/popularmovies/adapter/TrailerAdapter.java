@@ -1,4 +1,4 @@
-package com.example.android.popularmovies;
+package com.example.android.popularmovies.adapter;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -8,6 +8,9 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.example.android.popularmovies.R;
+import com.example.android.popularmovies.data.YouTubeVideo;
+
 import java.util.List;
 
 /**
@@ -16,8 +19,11 @@ import java.util.List;
 
 public class TrailerAdapter extends ArrayAdapter<YouTubeVideo> {
 
+    private Context mContext;
+
     public TrailerAdapter(Context context, List resource) {
         super(context, 0, resource);
+        mContext = context;
     }
 
 
@@ -32,7 +38,7 @@ public class TrailerAdapter extends ArrayAdapter<YouTubeVideo> {
         }
 
         TextView trailerNum = (TextView) convertView.findViewById(R.id.movie_trailer_num);
-        trailerNum.setText("Trailer " + (position+1));
+        trailerNum.setText(mContext.getString(R.string.tAdapter_trailer) + (position+1));
 
         return convertView;
     }

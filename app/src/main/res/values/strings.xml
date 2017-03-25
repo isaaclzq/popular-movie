@@ -1,9 +1,42 @@
 <resources>
     <string name="app_name">Popular Movies</string>
     <!--main.xml-->
+
+    <!--MovieAdapter.java-->
     <string name="popularity">Popularity</string>
     <string name="top_rate">Top_rate</string>
     <string name="no_network_connection">No Network Connection</string>
+    <string name="mAdapter_results">results</string>
+    <string name="mAdapter_title">original_title</string>
+    <string name="mAdapter_poster">poster_path</string>
+    <string name="mAdapter_overview">overview</string>
+    <string name="mAdapter_vote">vote_average</string>
+    <string name="mAdapter_release">release_date</string>
+    <string name="mAdapter_id">id</string>
+
+    <!--TrailerAdapter.java-->
+    <string name="tAdapter_trailer">"Trailer "</string>
+
+    <!--MainActivity.java-->
+    <string name="main_sort_criteria">sortCriteria</string>
+    <string name="main_url_key">key</string>
+    <string name="main_intent_key">movie</string>
+    <string name="main_empty_list">YOU HAVEN\'T SAVED ANY MOVIES YET!</string>
+
+    <!--DetailActivity.java-->
+    <string name="detail_key">movie</string>
+    <string name="detail_scale">/10</string>
+    <string name="detail_saved_color">#ffff00</string>
+    <string name="detail_saved">Saved</string>
+    <string name="detail_marked">Mark As Favorite</string>
+    <string name="detail_removed">Removed</string>
+    <string name="detail_videos">videos</string>
+    <string name="detail_reviews">reviews</string>
+    <string name="detail_json_results">results</string>
+    <string name="detail_json_key">key</string>
+    <string name="detail_json_author">author</string>
+    <string name="detail_json_content">content</string>
+    <string name="main_swap">swap</string>
 
 
 </resources>

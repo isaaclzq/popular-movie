@@ -1,4 +1,4 @@
-package com.example.android.popularmovies;
+package com.example.android.popularmovies.adapter;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -7,6 +7,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+
+import com.example.android.popularmovies.R;
+import com.example.android.popularmovies.data.Review;
 
 import java.util.List;
 

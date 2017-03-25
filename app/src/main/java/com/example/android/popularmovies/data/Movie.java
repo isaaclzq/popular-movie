@@ -1,12 +1,11 @@
-package com.example.android.popularmovies;
+package com.example.android.popularmovies.data;
 
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
-import com.example.android.popularmovies.data.MovieDbContract;
+import com.example.android.popularmovies.database.MovieDbContract;
 
 /**
  * Created by Isaac on 3/3/17.
@@ -26,16 +25,14 @@ public class Movie implements Parcelable{
     private String id;
     private int saved;
 
-    public Movie(String original_title, String thumnail, String overview, String vote_average, String release_date, String id) {
+    public Movie(String original_title, String thumnail, String overview, String vote_average, String release_date, String id, int saved) {
         this.original_title = original_title;
         this.thumnail = thumnail;
         this.overview = overview;
         this.vote_average = vote_average;
         this.release_date = release_date;
         this.id = id;
-        this.saved = 0;
-
-        Log.v("Movie.java", original_title + ", " + thumnail);
+        this.saved = saved;
     }
 
     public Movie(Cursor cursor) {
@@ -44,7 +41,8 @@ public class Movie implements Parcelable{
                 cursor.getString(cursor.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_MOVIE_OVERVIEW)),
                 cursor.getString(cursor.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_MOVIE_VOTE)),
                 cursor.getString(cursor.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_MOVIE_RELEASEDATE)),
-                cursor.getString(cursor.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_MOVIE_ID)));
+                cursor.getString(cursor.getColumnIndex(MovieDbContract.MovieEntry.COLUMN_MOVIE_ID)),
+                 1);
     }
 
     public String getId () {

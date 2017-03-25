@@ -3,7 +3,6 @@ package com.example.android.popularmovies;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
@@ -13,15 +12,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.example.android.popularmovies.data.MovieDbContract;
-import com.example.android.popularmovies.data.MovieDbHelper;
+import com.example.android.popularmovies.adapter.MovieAdapter;
+import com.example.android.popularmovies.data.Movie;
+import com.example.android.popularmovies.database.MovieDbContract;
+import com.example.android.popularmovies.utility.NetworkUtility;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,31 +31,31 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler {
 
+    // widgets
     private RecyclerView mRecyclerView;
     private MovieAdapter mMovieAdapter;
     private ProgressBar mProgressBar;
-    private int numColumn = 2;
-    private String intentDataKey = "movie";
-    private int WIDTHDIVIDER = 400;
     private TextView mNetworkConnection;
-    private int sortCriteria;
-    private String SORT_CRITERIA = "sortCriteria";
-    final private int LOADER_ID = 22;
-    final private String URL_KEY = "key";
-    final private int SAVED = 1;
+
     private ContentResolver mContentResolver;
-    private SQLiteDatabase mDb;
+
+    // variables
+    private int WIDTHDIVIDER = 400;
+    private final int LOADER_ID = 22;
+    private final int CACHE_LOAD_ID = 100;
+    private int sortCriteria;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        setupCache();
+
         mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         mNetworkConnection = (TextView) findViewById(R.id.no_internet);
         mContentResolver = getContentResolver();
-        mDb = (new MovieDbHelper(this)).getWritableDatabase();
 
         GridLayoutManager layoutManager = new GridLayoutManager(this, numberOfColumns(WIDTHDIVIDER));
         mRecyclerView.setLayoutManager(layoutManager);
@@ -64,10 +64,27 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         mMovieAdapter = new MovieAdapter(this);
         mRecyclerView.setAdapter(mMovieAdapter);
 
+
+
         if (savedInstanceState != null) {
-            loadMovieData(savedInstanceState.getInt(SORT_CRITERIA));
+            loadMovieData(savedInstanceState.getInt(getString(R.string.main_sort_criteria)));
         } else {
             loadMovieData(R.id.popular);
+        }
+    }
+
+    private void setupCache() {
+        Bundle bundle = new Bundle();
+        bundle.putString(getString(R.string.main_url_key), MovieDbContract.MovieEntry.CONTENT_URI.toString());
+        bundle.putBoolean(getString(R.string.main_swap), false);
+
+        LoaderManager loaderManager = getSupportLoaderManager();
+        Loader<JSONObject> loader = loaderManager.getLoader(LOADER_ID);
+
+        if (loader == null) {
+            loaderManager.initLoader(CACHE_LOAD_ID, bundle, new MovieDbAsyncTaskloader());
+        } else {
+            loaderManager.restartLoader(CACHE_LOAD_ID, bundle, new MovieDbAsyncTaskloader());
         }
     }
 
@@ -88,15 +105,16 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         switch (itemSelected) {
             case R.id.popular:
                 sortCriteria = R.id.popular;
-                bundle.putString(URL_KEY, NetworkUtility.popularMovie().toString());
+                bundle.putString(getString(R.string.main_url_key), NetworkUtility.popularMovie().toString());
                 break;
             case R.id.rate:
                 sortCriteria = R.id.rate;
-                bundle.putString(URL_KEY, NetworkUtility.topRatedMovie().toString());
+                bundle.putString(getString(R.string.main_url_key), NetworkUtility.topRatedMovie().toString());
                 break;
             case R.id.favorite:
                 sortCriteria = R.id.favorite;
-                bundle.putString(URL_KEY, MovieDbContract.MovieEntry.CONTENT_URI.toString());
+                bundle.putString(getString(R.string.main_url_key), MovieDbContract.MovieEntry.CONTENT_URI.toString());
+                bundle.putBoolean(getString(R.string.main_swap), true);
                 isCursor = true;
                 break;
             default:
@@ -124,8 +142,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     @Override
     public void onClick(Movie movie) {
         Intent i = new Intent(this, DetailActivity.class);
-        i.putExtra(intentDataKey, movie);
-        startActivityForResult(i, SAVED);
+        i.putExtra(getString(R.string.main_intent_key), movie);
+        startActivity(i);
     }
 
     @Override
@@ -143,10 +161,14 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt(SORT_CRITERIA, sortCriteria);
+        outState.putInt(getString(R.string.main_sort_criteria), sortCriteria);
     }
 
+
+
     private class MovieDbAsyncTaskloader implements LoaderManager.LoaderCallbacks<Cursor> {
+
+        boolean swap = false;
 
         @Override
         public Loader<Cursor> onCreateLoader(int id, final Bundle args) {
@@ -163,8 +185,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
                 @Override
                 public Cursor loadInBackground() {
-                    Uri uri = Uri.parse(args.getString(URL_KEY));
-                    Log.v("MainActivity", uri.toString());
+                    Uri uri = Uri.parse(args.getString(getString(R.string.main_url_key)));
+                    swap = args.getBoolean(getString(R.string.main_swap));
                     return mContentResolver.query(uri, null,null,null,null);
                 }
             };
@@ -172,17 +194,14 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
         @Override
         public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-            Log.v("MainActivity", "onloadfinished get here " + data.getCount());
             if (data != null && data.getCount() > 0) {
-                Log.v("MainActivity", "onloadfinished get here 1");
-                mMovieAdapter.setmMovieData(data);
+                mMovieAdapter.setmMovieData(data, swap);
                 mNetworkConnection.setVisibility(View.INVISIBLE);
                 mProgressBar.setVisibility(View.INVISIBLE);
                 data.close();
             } else {
                 mMovieAdapter.setEmptyData();
-                Log.v("MainActivity", "onloadfinished get here 2");
-                mNetworkConnection.setText("YOU HAVEN'T SAVED ANY MOVIES YET!");
+                mNetworkConnection.setText(R.string.main_empty_list);
                 mNetworkConnection.setVisibility(View.VISIBLE);
                 mProgressBar.setVisibility(View.INVISIBLE);
                 data.close();
@@ -217,7 +236,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
                     String result = null;
                     JSONObject resultJson = null;
                     try {
-                        url = new URL(args.getString(URL_KEY));
+                        url = new URL(args.getString(getString(R.string.main_url_key)));
                         result = NetworkUtility.getResponseFromHttpUrl(url);
                         resultJson = new JSONObject(result);
                     } catch (JSONException e) {

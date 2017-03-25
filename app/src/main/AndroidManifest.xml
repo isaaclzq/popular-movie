@@ -29,7 +29,7 @@
         
         <provider
             android:authorities="com.example.android.popularmovies"
-            android:name="com.example.android.popularmovies.data.MovieContentProvider"
+            android:name="com.example.android.popularmovies.database.MovieContentProvider"
             android:exported="false"/>
     </application>
 

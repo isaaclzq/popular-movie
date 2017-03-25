@@ -1,4 +1,4 @@
-package com.example.android.popularmovies;
+package com.example.android.popularmovies.utility;
 
 import android.net.Uri;
 
@@ -15,10 +15,10 @@ import java.util.Scanner;
 
 public class NetworkUtility {
 
-    final static String BASEURL = "http://api.themoviedb.org/3/movie/";
-    final static String POPULAR = "popular";
-    final static String TOPRATED = "top_rated";
-    final static String KEY = "api_key";
+    final static public String BASEURL = "http://api.themoviedb.org/3/movie/";
+    final static public String POPULAR = "popular";
+    final static public String TOPRATED = "top_rated";
+    final static public String KEY = "api_key";
     final static public String APIKEY = "";
 
     public static URL popularMovie () {

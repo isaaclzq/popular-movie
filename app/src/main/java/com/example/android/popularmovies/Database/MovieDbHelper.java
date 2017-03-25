@@ -1,4 +1,4 @@
-package com.example.android.popularmovies.data;
+package com.example.android.popularmovies.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -31,7 +31,6 @@ public class MovieDbHelper extends SQLiteOpenHelper {
                         MovieDbContract.MovieEntry.COLUMN_MOVIE_RELEASEDATE + " TEXT NOT NULL" +
                         "); ";
         db.execSQL(SQL_CREATE_MOVIE_TABLE);
-        Log.v("MovieHelper", "created a table");
     }
 
     @Override

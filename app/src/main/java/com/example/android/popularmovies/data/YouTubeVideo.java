@@ -1,4 +1,4 @@
-package com.example.android.popularmovies;
+package com.example.android.popularmovies.data;
 
 import android.net.Uri;
 import android.os.Parcel;
